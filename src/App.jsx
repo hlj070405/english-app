@@ -2,10 +2,11 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import HomePage from './pages/HomePage'
 import StudyPage from './pages/StudyPage'
+import ArticleStudyPage from './pages/ArticleStudyPage'
 import './App.css'
 
 function App() {
-  const [currentPage, setCurrentPage] = useState('home') // 'home' | 'study'
+  const [currentPage, setCurrentPage] = useState('home') // 'home', 'study', 'article'
 
   const pageVariants = {
     initial: { opacity: 0, scale: 0.95 },
@@ -21,7 +22,7 @@ function App() {
   return (
     <div className="app">
       <AnimatePresence mode="wait">
-        {currentPage === 'home' ? (
+        {currentPage === 'home' && (
           <motion.div
             key="home"
             variants={pageVariants}
@@ -30,9 +31,13 @@ function App() {
             exit="exit"
             transition={pageTransition}
           >
-            <HomePage onNavigate={() => setCurrentPage('study')} />
+            <HomePage 
+              onNavigate={() => setCurrentPage('study')}
+              onNavigateArticle={() => setCurrentPage('article')}
+            />
           </motion.div>
-        ) : (
+        )}
+        {currentPage === 'study' && (
           <motion.div
             key="study"
             variants={pageVariants}
@@ -42,6 +47,18 @@ function App() {
             transition={pageTransition}
           >
             <StudyPage onNavigate={() => setCurrentPage('home')} />
+          </motion.div>
+        )}
+        {currentPage === 'article' && (
+          <motion.div
+            key="article"
+            variants={pageVariants}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            transition={pageTransition}
+          >
+            <ArticleStudyPage onNavigate={() => setCurrentPage('home')} />
           </motion.div>
         )}
       </AnimatePresence>

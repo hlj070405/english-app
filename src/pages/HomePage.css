@@ -192,16 +192,65 @@
   flex-shrink: 0;
 }
 
-/* 连续打卡卡片 */
+/* 签到卡片 - 基础样式 */
 .streak-card {
-  background: rgba(26, 31, 58, 0.8);
   backdrop-filter: blur(10px);
   border-radius: var(--border-radius-lg);
   padding: 20px;
   text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+/* 未签到状态 - 纯金色 */
+.streak-card.unchecked {
+  background: linear-gradient(135deg, #FFD700, #FFA500);
+  border: 2px solid #FFD700;
+  box-shadow: 
+    0 0 20px rgba(255, 215, 0, 0.6),
+    0 4px 12px rgba(255, 165, 0, 0.4);
+}
+
+.streak-card.unchecked:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 0 30px rgba(255, 215, 0, 0.8),
+    0 6px 16px rgba(255, 165, 0, 0.5);
+}
+
+/* 已签到状态 - 深色背景金边 */
+.streak-card.checked-in {
+  background: rgba(26, 31, 58, 0.8);
   border: 2px solid var(--hero-accent);
   box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+  cursor: default;
 }
+
+/* 签到提示文字 */
+.checkin-prompt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 0;
+}
+
+.checkin-icon {
+  font-size: 32px;
+  animation: float 2s ease-in-out infinite;
+}
+
+.checkin-text {
+  font-size: 16px;
+  font-weight: bold;
+  color: white;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  letter-spacing: 1px;
+}
+
+/* 扫光效果已移至全局 index.css，直接使用 shine-effect-once 类 */
 
 .streak-header {
   display: flex;
@@ -282,19 +331,31 @@
   transform: translateY(-4px);
 }
 
-.shine-effect {
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: linear-gradient(
-    45deg,
-    transparent 30%,
-    rgba(255, 255, 255, 0.2) 50%,
-    transparent 70%
-  );
-  animation: shine 3s infinite;
+/* 扫光效果已移至全局 index.css，直接使用 shine-effect 类 */
+
+/* 文章学习卡片 */
+.article-card {
+  background: linear-gradient(135deg, var(--study-success) 0%, var(--study-primary) 100%);
+  border-radius: var(--border-radius-lg);
+  padding: 40px;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.3s;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  max-height: 600px;
+  margin-top: 20px;
+}
+
+.article-card:hover {
+  transform: translateY(-4px);
+}
+
+.gradient-card-alt {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
 }
 
 .quest-header {

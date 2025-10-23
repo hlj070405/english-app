@@ -1,7 +1,20 @@
+import { useState } from 'react'
 import { motion } from 'framer-motion'
 import './HomePage.css'
 
-function HomePage({ onNavigate }) {
+function HomePage({ onNavigate, onNavigateArticle }) {
+  const [isCheckedIn, setIsCheckedIn] = useState(false)
+  const [showShine, setShowShine] = useState(false)
+
+  const handleCheckIn = () => {
+    if (!isCheckedIn) {
+      setIsCheckedIn(true)
+      setShowShine(true)
+      // 动画1秒，在0.99秒时移除扫光层
+      setTimeout(() => setShowShine(false), 990)
+    }
+  }
+
   return (
     <div className="home-page">
       {/* 网格背景 */}
@@ -47,20 +60,34 @@ function HomePage({ onNavigate }) {
             <div className="xp-text">1,240 / 2,000 XP</div>
           </motion.div>
 
-          {/* 连续打卡 & 能力值 */}
+          {/* 签到卡片 & 能力值 */}
           <div className="stats-row">
             <motion.div 
-              className="streak-card neon-card"
+              className={`streak-card ${isCheckedIn ? 'checked-in' : 'unchecked'} ${showShine ? 'shine-once' : ''}`}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
+              onClick={handleCheckIn}
             >
-              <div className="streak-header">
-                <span className="streak-icon">🔥</span>
-                <span className="streak-label">STREAK</span>
-              </div>
-              <div className="streak-number">12</div>
-              <div className="streak-text">DAYS</div>
+              {showShine && <div className="shine-effect-once"></div>}
+              
+              {!isCheckedIn ? (
+                // 未签到状态 - 金色
+                <div className="checkin-prompt">
+                  <span className="checkin-icon">✨</span>
+                  <span className="checkin-text">点击签到</span>
+                </div>
+              ) : (
+                // 已签到状态
+                <>
+                  <div className="streak-header">
+                    <span className="streak-icon">🔥</span>
+                    <span className="streak-label">STREAK</span>
+                  </div>
+                  <div className="streak-number">12</div>
+                  <div className="streak-text">DAYS</div>
+                </>
+              )}
             </motion.div>
 
             <motion.div 
@@ -116,7 +143,7 @@ function HomePage({ onNavigate }) {
             <div className="shine-effect"></div>
             <div className="quest-header">
               <span className="quest-icon">⚡</span>
-              <span className="quest-title">DAILY QUEST</span>
+              <span className="quest-title">WORD CARDS</span>
             </div>
             <div className="quest-list">
               <div className="quest-item">
@@ -125,11 +152,44 @@ function HomePage({ onNavigate }) {
               </div>
               <div className="quest-item">
                 <span className="quest-bullet">▸</span>
-                <span>SPEAK 5 MIN</span>
+                <span>FLIP & LEARN</span>
               </div>
               <div className="quest-item">
                 <span className="quest-bullet">▸</span>
+                <span>KEYBOARD FAST</span>
+              </div>
+            </div>
+            <button className="quest-btn">
+              <span>START</span>
+              <span className="btn-arrow">▸</span>
+            </button>
+          </motion.div>
+
+          {/* 文章学习卡片 */}
+          <motion.div 
+            className="article-card gradient-card-alt"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
+            onClick={onNavigateArticle}
+          >
+            <div className="shine-effect"></div>
+            <div className="quest-header">
+              <span className="quest-icon">📝</span>
+              <span className="quest-title">ARTICLE MODE</span>
+            </div>
+            <div className="quest-list">
+              <div className="quest-item">
+                <span className="quest-bullet">▸</span>
                 <span>READ ARTICLE</span>
+              </div>
+              <div className="quest-item">
+                <span className="quest-bullet">▸</span>
+                <span>FILL BLANKS</span>
+              </div>
+              <div className="quest-item">
+                <span className="quest-bullet">▸</span>
+                <span>COLLECT CARDS</span>
               </div>
             </div>
             <button className="quest-btn">

@@ -58,20 +58,20 @@ function StudyPage({ onNavigate }) {
 
   // 下一张卡片
   const handleNext = () => {
-    setIsExiting(true)
-    
-    setTimeout(() => {
-      if (currentWord < words.length - 1) {
+    if (currentWord < words.length - 1) {
+      setIsExiting(true)
+      // 立即切换，不等待动画完成
+      setTimeout(() => {
         setCurrentWord(currentWord + 1)
         setIsFlipped(false)
         setShowDontKnow(false)
         setIsExiting(false)
-      } else {
-        // 完成所有单词
-        alert('🎉 太棒了！今天的单词学完了！')
-        onNavigate()
-      }
-    }, 400)
+      }, 50) // 极短延迟，确保状态更新
+    } else {
+      // 完成所有单词
+      alert('🎉 太棒了！今天的单词学完了！')
+      onNavigate()
+    }
   }
 
   return (
@@ -90,36 +90,35 @@ function StudyPage({ onNavigate }) {
       <div className="study-content">
         
         {/* 单词卡片 */}
-        <AnimatePresence mode="wait">
+        <AnimatePresence>
           <motion.div 
-            className={`word-card-container ${isFlipped ? 'flipped' : ''}`}
+            className={`word-card-container ${isFlipped ? 'flipped' : ''} ${isExiting ? 'exiting' : ''}`}
             key={currentWord}
             initial={{ scale: 0.9, y: 50, opacity: 0 }}
             animate={{ 
               scale: 1, 
               y: 0, 
               opacity: 1,
-              x: isExiting ? 1000 : 0,
-              rotate: isExiting ? 20 : 0
+              x: isExiting ? 1200 : 0,
+              rotate: isExiting ? 25 : 0
             }}
-            exit={{ scale: 0.8, opacity: 0 }}
+            exit={{ 
+              x: 1200,
+              rotate: 25,
+              opacity: 0,
+              transition: { duration: 0.4 }
+            }}
             transition={{ 
-              duration: 0,
+              duration: 0.3,
               type: "spring",
-              stiffness: 400,
-              damping: 25
+              stiffness: 300,
+              damping: 30
             }}
+            style={{ zIndex: isExiting ? 10 : 1 }}
           >
             {/* 不会标记 */}
             {showDontKnow && (
-              <motion.div 
-                className="dont-know-badge"
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ type: "spring", stiffness: 400, damping: 10 }}
-              >
-                ?
-              </motion.div>
+              <div className="dont-know-badge"></div>
             )}
 
             <div className="word-card">
@@ -165,11 +164,6 @@ function StudyPage({ onNavigate }) {
             </div>
           </motion.div>
         </AnimatePresence>
-
-        {/* 底部提示 */}
-        <div className="study-tips">
-          <p>💡 快捷键：<kbd>Z</kbd> = 不会（翻转） · <kbd>X</kbd> = 会了（下一个）</p>
-        </div>
 
       </div>
     </div>

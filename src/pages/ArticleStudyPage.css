@@ -1,0 +1,330 @@
+.article-study-page {
+  height: 100vh;
+  background: var(--study-bg);
+  color: var(--study-text);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* 顶部导航 */
+.study-header {
+  position: absolute;
+  top: 20px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0 40px;
+  z-index: 10;
+}
+
+.back-btn {
+  position: absolute;
+  left: 40px;
+  width: 36px;
+  height: 36px;
+  background: white;
+  border: 2px solid #E8E8E8;
+  color: var(--study-primary);
+  font-size: 18px;
+  cursor: pointer;
+  border-radius: 50%;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.back-btn:hover {
+  background: var(--study-primary);
+  color: white;
+  border-color: var(--study-primary);
+  transform: scale(1.05);
+}
+
+.progress-text {
+  font-size: 13px;
+  color: var(--study-secondary);
+  font-weight: 500;
+  background: white;
+  padding: 6px 16px;
+  border-radius: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+/* 主要内容区 */
+.article-study-content {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 30px;
+  padding: 80px 50px 40px 60px;
+  overflow: hidden;
+}
+
+/* 左侧文章区 */
+.article-section {
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  padding-right: 20px;
+}
+
+.article-section::-webkit-scrollbar {
+  width: 6px;
+}
+
+.article-section::-webkit-scrollbar-thumb {
+  background: #ddd;
+  border-radius: 3px;
+}
+
+.article-title {
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--study-text);
+  margin-bottom: 24px;
+}
+
+.article-body {
+  font-size: 18px;
+  line-height: 2;
+  color: var(--study-text);
+  margin-bottom: 32px;
+  white-space: pre-wrap;
+}
+
+/* 交互式单词 */
+.word-current {
+  position: relative;
+  display: inline-block;
+  background: linear-gradient(120deg, #fbbf24, #f59e0b);
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-weight: bold;
+  color: white;
+  min-width: 100px;
+  text-align: center;
+  animation: pulse-glow 1.5s infinite;
+  font-style: italic;
+  letter-spacing: 1px;
+  transition: all 0.3s;
+}
+
+.word-current.has-input {
+  font-style: normal;
+  letter-spacing: 0.5px;
+  animation: none;
+  box-shadow: 0 0 15px rgba(251, 191, 36, 0.6);
+}
+
+.word-current.shake-error {
+  background: linear-gradient(120deg, #ef4444, #dc2626);
+  animation: shake-horizontal 0.5s;
+}
+
+@keyframes pulse-glow {
+  0%, 100% { 
+    box-shadow: 0 0 10px rgba(251, 191, 36, 0.5);
+  }
+  50% { 
+    box-shadow: 0 0 20px rgba(251, 191, 36, 0.8);
+  }
+}
+
+@keyframes shake-horizontal {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-8px); }
+  20%, 40%, 60%, 80% { transform: translateX(8px); }
+}
+
+.word-pending {
+  color: #ccc;
+  font-style: italic;
+  letter-spacing: 2px;
+  padding: 0 4px;
+}
+
+.word-answered {
+  font-weight: bold;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: all 0.3s;
+}
+
+.word-answered.correct {
+  color: var(--study-success);
+  background: rgba(112, 193, 179, 0.1);
+}
+
+.word-answered.wrong {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+}
+
+/* 控制提示 */
+.control-hints {
+  text-align: center;
+  padding: 16px;
+  color: var(--study-secondary);
+  font-size: 14px;
+  background: rgba(91, 155, 213, 0.05);
+  border-radius: var(--border-radius-md);
+}
+
+/* 右侧单词库区域 */
+.word-bank-section {
+  display: flex;
+  flex-direction: column;
+}
+
+.word-bank-container {
+  background: white;
+  border-radius: var(--border-radius-lg);
+  padding: 20px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.word-bank-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--study-text);
+}
+
+.bank-icon {
+  font-size: 18px;
+}
+
+/* 单词网格 - 两列布局 */
+.word-bank-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  overflow-y: auto;
+  max-height: calc(100vh - 180px);
+  padding-right: 8px;
+}
+
+.word-bank-grid::-webkit-scrollbar {
+  width: 4px;
+}
+
+.word-bank-grid::-webkit-scrollbar-thumb {
+  background: #ddd;
+  border-radius: 2px;
+}
+
+/* 单词卡片 */
+.bank-card {
+  position: relative;
+  background: #f8f9fa;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  padding: 10px;
+  transition: all 0.3s;
+  cursor: default;
+}
+
+/* 未使用状态 - 灰色 */
+.bank-card.unused {
+  background: #f8f9fa;
+  border-color: #e9ecef;
+}
+
+/* 答对状态 - 绿色 */
+.bank-card.correct {
+  background: rgba(112, 193, 179, 0.1);
+  border-color: var(--study-success);
+  border-width: 2px;
+}
+
+/* 答错相关状态 - 保持灰色背景，左上角加暗黄点 */
+.bank-card.wrong,
+.bank-card.wrongAnswer {
+  background: #f8f9fa;
+  border-color: #e9ecef;
+}
+
+/* 暗黄色小点 - 左上角 */
+.wrong-dot {
+  position: absolute;
+  top: -6px;
+  left: -6px;
+  width: 16px;
+  height: 16px;
+  background: linear-gradient(135deg, #D4A574, #B8935C);
+  border: 2px solid white;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(180, 147, 92, 0.3);
+  z-index: 10;
+}
+
+.bank-word {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--study-text);
+  margin-bottom: 4px;
+  line-height: 1.3;
+}
+
+.bank-meaning {
+  font-size: 11px;
+  color: var(--study-secondary);
+  line-height: 1.3;
+}
+
+/* 能量球动画 */
+.energy-ball {
+  position: fixed;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+.energy-ball.correct {
+  background: radial-gradient(circle, #4ade80, #22c55e);
+  box-shadow: 0 0 30px #4ade80, 0 0 60px #22c55e;
+}
+
+.energy-ball.wrong {
+  background: radial-gradient(circle, #f87171, #ef4444);
+  box-shadow: 0 0 30px #f87171, 0 0 60px #ef4444;
+}
+
+/* 响应式 */
+@media (max-width: 1200px) {
+  .article-study-content {
+    grid-template-columns: 1fr;
+    padding: 80px 40px 40px;
+  }
+  
+  .word-bank-section {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .article-study-content {
+    padding: 80px 20px 40px;
+  }
+  
+  .article-title {
+    font-size: 24px;
+  }
+  
+  .article-body {
+    font-size: 16px;
+  }
+}

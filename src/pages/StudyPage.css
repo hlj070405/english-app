@@ -66,38 +66,38 @@
   width: 100%;
   margin: 0 auto;
   padding: 20px 60px 30px;
-  overflow: hidden;
+  overflow: visible;
   perspective: 1000px;
+  position: relative;
 }
 
-/* 卡片容器 - 3D变换 */
+/* 卡片容器 - 3D变换 + 绝对定位支持堆叠 */
 .word-card-container {
-  position: relative;
+  position: absolute;
   width: 100%;
   max-width: 700px;
-  flex-shrink: 0;
   transform-style: preserve-3d;
+  will-change: transform;
 }
 
-/* 不会标记 - 左上角圈圈 */
+/* 退出中的卡片在上层 */
+.word-card-container.exiting {
+  z-index: 10 !important;
+}
+
+/* 不会标记 - 左上角小圆点 */
 .dont-know-badge {
   position: absolute;
-  top: -12px;
-  left: -12px;
-  width: 48px;
-  height: 48px;
-  background: linear-gradient(135deg, #FF6B6B, #FF4757);
-  border: 4px solid white;
+  top: -8px;
+  left: -8px;
+  width: 24px;
+  height: 24px;
+  background: linear-gradient(135deg, #D4A574, #B8935C);
+  border: 3px solid white;
   border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-  font-weight: bold;
-  color: white;
   box-shadow: 
-    0 4px 12px rgba(255, 71, 87, 0.4),
-    0 2px 4px rgba(0, 0, 0, 0.1);
+    0 2px 6px rgba(180, 147, 92, 0.3),
+    0 1px 2px rgba(0, 0, 0, 0.1);
   z-index: 10;
 }
 
