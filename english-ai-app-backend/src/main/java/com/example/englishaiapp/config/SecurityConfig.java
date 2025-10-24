@@ -22,15 +22,7 @@ public class SecurityConfig {
         http
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers(
-                    "/api/users/register", 
-                    "/api/users/login",
-                    // Swagger UI and API docs
-                    "/swagger-ui/**",
-                    "/v3/api-docs/**",
-                    "/swagger-ui.html"
-                ).permitAll()
-                .anyRequest().authenticated()
+                .anyRequest().permitAll() // 临时关闭所有认证，方便测试
             );
         return http.build();
     }

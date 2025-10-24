@@ -15,7 +15,7 @@ public class Word {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true, nullable = false)
+    @Column(nullable = false)
     private String word;
 
     private String phonetic;
@@ -38,6 +38,15 @@ public class Word {
 
     @Column(columnDefinition = "TEXT")
     private String exampleTranslation;
+
+    @Column(columnDefinition = "TEXT")
+    private String distortion; // 词形变化
+
+    @Column(columnDefinition = "TEXT")
+    private String phrase; // 相关词组
+
+    @Column(columnDefinition = "TEXT")
+    private String tip; // 助记提示
 
     @CreationTimestamp
     private LocalDateTime createdAt;

@@ -7,35 +7,36 @@ function StudyPage({ onNavigate }) {
   const [isFlipped, setIsFlipped] = useState(false)
   const [isExiting, setIsExiting] = useState(false)
   const [showDontKnow, setShowDontKnow] = useState(false)
+  const [words, setWords] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
-  const words = [
-    {
-      word: 'Persistence',
-      phonetic: '/pərˈsɪstəns/',
-      meaning: 'n. 坚持；毅力',
-      example: 'Success requires persistence.',
-      translation: '成功需要坚持。',
-      tip: 'persist(坚持) + ence(名词后缀)'
-    },
-    {
-      word: 'Achievement',
-      phonetic: '/əˈtʃiːvmənt/',
-      meaning: 'n. 成就；完成',
-      example: 'This is a great achievement.',
-      translation: '这是一个伟大的成就。',
-      tip: 'achieve(达到) + ment(名词后缀)'
-    },
-    {
-      word: 'Dedication',
-      phonetic: '/ˌdedɪˈkeɪʃn/',
-      meaning: 'n. 奉献；专注',
-      example: 'Her dedication is inspiring.',
-      translation: '她的奉献精神很鼓舞人心。',
-      tip: 'dedicate(致力于) + ion(名词后缀)'
+  // 👇 在组件函数内部，useState 声明之后添加
+  useEffect(() => {
+  const fetchWords = async () => {
+    try {
+      setLoading(true)
+      const response = await fetch('/api/learn/session?limit=20', {
+        credentials: 'include' // 携带Cookie用于认证
+      })
+      
+      if (!response.ok) {
+        throw new Error('获取单词失败，请检查网络或稍后再试')
+      }
+      
+      const data = await response.json()
+      setWords(data)
+      setError(null)
+    } catch (err) {
+      setError(err.message)
+      setWords([])
+    } finally {
+      setLoading(false)
     }
-  ]
+  }
 
-  const word = words[currentWord]
+  fetchWords()
+  }, []) // 空依赖数组，只在组件挂载时执行一次
 
   // 键盘监听
   useEffect(() => {
@@ -43,18 +44,43 @@ function StudyPage({ onNavigate }) {
       const key = e.key.toLowerCase()
       
       if (key === 'z' && !isFlipped) {
-        // Z键 - 不会，翻转卡片并标记
+        // Z键 - 不认识，翻转卡片查看释义，但不跳转
         setIsFlipped(true)
         setShowDontKnow(true)
+        submitResultOnly(false) // 只提交结果，不跳转
       } else if (key === 'x') {
-        // X键 - 会了，滑出卡片
+        // X键 - 跳到下一张
+        if (!isFlipped) {
+          // 如果还没翻转，说明用户认识这个单词
+          submitResultOnly(true) // 提交"认识"
+        }
+        // 无论是否翻转，都跳到下一张
         handleNext()
       }
     }
 
     window.addEventListener('keydown', handleKeyPress)
     return () => window.removeEventListener('keydown', handleKeyPress)
-  }, [isFlipped, currentWord])
+  }, [isFlipped, currentWord, words])
+
+  // 只提交结果，不跳转
+  const submitResultOnly = async (isCorrect) => {
+    try {
+      await fetch('/api/learn/submit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ 
+          wordId: words[currentWord].id, 
+          isCorrect 
+        }),
+      })
+    } catch (error) {
+      console.error('提交学习结果失败:', error)
+    }
+  }
 
   // 下一张卡片
   const handleNext = () => {
@@ -73,6 +99,33 @@ function StudyPage({ onNavigate }) {
       onNavigate()
     }
   }
+
+  // 所有 Hooks 已经调用完毕，现在可以处理条件性 return
+  if (loading) {
+    return (
+      <div className="study-page" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <p style={{ fontSize: '1.5rem', color: '#666' }}>正在加载单词...</p>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="study-page" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <p style={{ fontSize: '1.5rem', color: '#ff4444' }}>{error}</p>
+      </div>
+    )
+  }
+
+  if (words.length === 0) {
+    return (
+      <div className="study-page" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <p style={{ fontSize: '1.5rem', color: '#4CAF50' }}>🎉 今日任务已完成！</p>
+      </div>
+    )
+  }
+
+  const word = words[currentWord]
 
   return (
     <div className="study-page">
@@ -127,10 +180,9 @@ function StudyPage({ onNavigate }) {
                 <>
                   <h1 className="word-main">{word.word}</h1>
                   <p className="word-phonetic">{word.phonetic}</p>
-                  <button className="sound-btn">🔊</button>
                   
                   <div className="card-hint">
-                    <p>按 <kbd>Z</kbd> 查看释义 · 按 <kbd>X</kbd> 跳过</p>
+                    <p>按 <kbd>Z</kbd> 不认识 · 按 <kbd>X</kbd> 认识</p>
                   </div>
                 </>
               ) : (
@@ -147,8 +199,22 @@ function StudyPage({ onNavigate }) {
                   </div>
                   
                   <div className="word-example">
-                    <p className="example-en">{word.example}</p>
-                    <p className="example-cn">{word.translation}</p>
+                    {(() => {
+                      try {
+                        const phrases = JSON.parse(word.phrase || '[]')
+                        if (phrases.length > 0) {
+                          return (
+                            <>
+                              <p className="example-en">{phrases[0].phrase}</p>
+                              <p className="example-cn">{phrases[0].translation}</p>
+                            </>
+                          )
+                        }
+                      } catch (e) {
+                        console.error('解析phrase失败:', e)
+                      }
+                      return null
+                    })()}
                   </div>
                   
                   <div className="word-tip">

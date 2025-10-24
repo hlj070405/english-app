@@ -50,6 +50,9 @@ public class User {
     @Column(columnDefinition = "INT DEFAULT 0")
     private Integer wordsMastered = 0;
 
+    @Column(columnDefinition = "BIGINT DEFAULT 0")
+    private Long learningIndex = 0L; // 学习队列指针
+
     @CreationTimestamp
     private LocalDateTime createdAt;
 

@@ -24,8 +24,8 @@ public class UserWordMastery {
     @Column(name = "word_id", nullable = false)
     private Long wordId;
 
-    @Column(columnDefinition = "INT DEFAULT 1")
-    private Integer masteryScore = 1;
+    @Column(columnDefinition = "INT DEFAULT 0")
+    private Integer masteryScore = 0;
 
     @Column(columnDefinition = "INT DEFAULT 0")
     private Integer learnCount = 0;
@@ -43,6 +43,12 @@ public class UserWordMastery {
     private LocalDateTime lastContactAt;
 
     private LocalDateTime nextReviewAt;
+
+    @Column(columnDefinition = "BIGINT DEFAULT 0")
+    private Long queuePosition = 0L;
+
+    @Enumerated(EnumType.STRING)
+    private WordLearningStatus status = WordLearningStatus.LEARNING;
 
     @CreationTimestamp
     private LocalDateTime createdAt;
