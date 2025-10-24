@@ -1,8 +1,9 @@
-import { useState } from 'react'
-import { motion } from 'framer-motion'
+import { useState, useEffect, useRef } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import './HomePage.css'
+import defaultAvatar from './Iconfont.svg';
 
-function HomePage({ onNavigate, onNavigateArticle }) {
+function HomePage({ user, onLogout, onNavigate, onNavigateArticle }) {
   const [isCheckedIn, setIsCheckedIn] = useState(false)
   const [showShine, setShowShine] = useState(false)
 
@@ -32,8 +33,7 @@ function HomePage({ onNavigate, onNavigateArticle }) {
               <span className="logo-text">EnglishAI</span>
             </div>
             <div className="nav-actions">
-              <button className="icon-btn">🔔</button>
-              <button className="icon-btn">👤</button>
+              <UserAvatar user={user} onLogout={onLogout} />
             </div>
           </div>
 
@@ -202,5 +202,66 @@ function HomePage({ onNavigate, onNavigateArticle }) {
     </div>
   )
 }
+
+// 自定义Hook：点击外部区域时触发回调
+const useClickOutside = (ref, callback) => {
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (ref.current && !ref.current.contains(event.target)) {
+        callback();
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [ref, callback]);
+};
+
+// 用户头像和下拉菜单组件
+const UserAvatar = ({ user, onLogout }) => {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const menuRef = useRef(null);
+
+  useClickOutside(menuRef, () => {
+    if (isMenuOpen) {
+      setIsMenuOpen(false);
+    }
+  });
+
+  return (
+    <div className="user-avatar-container" ref={menuRef}>
+      <motion.img
+        src={user.avatar || defaultAvatar}
+        alt="User Avatar"
+        className="user-avatar"
+        onClick={() => setIsMenuOpen(!isMenuOpen)}
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
+      />
+      <AnimatePresence>
+        {isMenuOpen && (
+          <motion.div
+            className="dropdown-menu"
+            initial={{ opacity: 0, y: -10, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -10, scale: 0.95 }}
+            transition={{ duration: 0.2 }}
+          >
+            <div className="menu-header">
+              <strong>{user.nickname || user.username}</strong>
+              <p>{user.email}</p>
+            </div>
+            <div className="menu-item">个人资料</div>
+            <div className="menu-item">设置</div>
+            <div className="menu-item logout" onClick={onLogout}>
+              登出
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
 
 export default HomePage

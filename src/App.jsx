@@ -1,12 +1,27 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import HomePage from './pages/HomePage'
 import StudyPage from './pages/StudyPage'
 import ArticleStudyPage from './pages/ArticleStudyPage'
+import AuthPage from './pages/AuthPage'
 import './App.css'
 
 function App() {
+  const [user, setUser] = useState(null) // 用户状态
   const [currentPage, setCurrentPage] = useState('home') // 'home', 'study', 'article'
+
+  // 检查localStorage以实现持久化登录
+  useEffect(() => {
+    try {
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        setUser(JSON.parse(storedUser));
+      }
+    } catch (error) {
+      console.error("Failed to parse user from localStorage", error);
+      localStorage.removeItem('user');
+    }
+  }, []);
 
   const pageVariants = {
     initial: { opacity: 0, scale: 0.95 },
@@ -17,6 +32,20 @@ function App() {
   const pageTransition = {
     duration: 0.4,
     ease: 'easeInOut'
+  }
+
+  const handleLoginSuccess = (loggedInUser) => {
+    setUser(loggedInUser);
+    setCurrentPage('home');
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('user');
+    setUser(null);
+  };
+
+  if (!user) {
+    return <AuthPage onLoginSuccess={handleLoginSuccess} />;
   }
 
   return (
@@ -32,6 +61,8 @@ function App() {
             transition={pageTransition}
           >
             <HomePage 
+              user={user}
+              onLogout={handleLogout}
               onNavigate={() => setCurrentPage('study')}
               onNavigateArticle={() => setCurrentPage('article')}
             />

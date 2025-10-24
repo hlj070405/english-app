@@ -331,6 +331,75 @@
   transform: translateY(-4px);
 }
 
+/* 用户头像和下拉菜单 */
+.user-avatar-container {
+  position: relative;
+  z-index: 100;
+}
+
+.user-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  background-color: #f0f2f5; /* 改为浅灰色背景 */
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: 55px;
+  right: 0;
+  width: 240px;
+  background: white;
+  border-radius: var(--border-radius-lg);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.menu-header {
+  padding: 10px 15px;
+  border-bottom: 1px solid #f0f2f5;
+  margin-bottom: 5px;
+}
+
+.menu-header strong {
+  font-size: 16px;
+  color: var(--study-text);
+}
+
+.menu-header p {
+  font-size: 14px;
+  color: var(--study-secondary);
+  margin: 0;
+}
+
+.menu-item {
+  padding: 12px 15px;
+  border-radius: var(--border-radius-md);
+  cursor: pointer;
+  transition: background-color 0.2s;
+  font-size: 15px;
+  color: var(--study-text);
+}
+
+.menu-item:hover {
+  background-color: #f0f2f5;
+}
+
+.menu-item.logout {
+  color: #ef4444;
+}
+
+.menu-item.logout:hover {
+  background-color: rgba(239, 68, 68, 0.1);
+}
+
+
 /* 扫光效果已移至全局 index.css，直接使用 shine-effect 类 */
 
 /* 文章学习卡片 */
@@ -458,6 +527,13 @@
   align-items: center;
   gap: 12px;
   font-size: 16px;
+}
+
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 5px;
 }
 
 .rank {
