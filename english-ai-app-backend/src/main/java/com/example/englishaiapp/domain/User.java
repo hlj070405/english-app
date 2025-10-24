@@ -53,6 +53,9 @@ public class User {
     @Column(columnDefinition = "BIGINT DEFAULT 0")
     private Long learningIndex = 0L; // 学习队列指针
 
+    @Column(columnDefinition = "TEXT")
+    private String recentWordIds = "[]"; // 最近5个单词的ID（JSON格式）
+
     @CreationTimestamp
     private LocalDateTime createdAt;
 

@@ -27,32 +27,22 @@ public class UserWordMastery {
     @Column(columnDefinition = "INT DEFAULT 0")
     private Integer masteryScore = 0;
 
-    @Column(columnDefinition = "INT DEFAULT 0")
-    private Integer learnCount = 0;
+    private LocalDateTime lastLearnedAt;
 
-    @Column(columnDefinition = "INT DEFAULT 0")
-    private Integer correctCount = 0;
-
-    @Column(columnDefinition = "INT DEFAULT 0")
-    private Integer wrongCount = 0;
-
-    private LocalDateTime firstLearnedAt;
-
-    private LocalDateTime lastReviewedAt;
-
-    private LocalDateTime lastContactAt;
-
-    private LocalDateTime nextReviewAt;
-
-    @Column(columnDefinition = "BIGINT DEFAULT 0")
-    private Long queuePosition = 0L;
-
-    @Enumerated(EnumType.STRING)
-    private WordLearningStatus status = WordLearningStatus.LEARNING;
+    private LocalDateTime lastSeenAt;
 
     @CreationTimestamp
     private LocalDateTime createdAt;
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+
+    // 构造函数
+    public UserWordMastery() {}
+
+    public UserWordMastery(Long userId, Long wordId, Integer masteryScore) {
+        this.userId = userId;
+        this.wordId = wordId;
+        this.masteryScore = masteryScore;
+    }
 }

@@ -15,6 +15,10 @@ public interface UserWordMasteryRepository extends JpaRepository<UserWordMastery
 
     Optional<UserWordMastery> findByUserIdAndWordId(Long userId, Long wordId);
 
-    @Query("SELECT m FROM UserWordMastery m WHERE m.userId = :userId AND m.status = 'LEARNING' AND m.queuePosition >= :learningIndex ORDER BY m.queuePosition ASC")
-    List<UserWordMastery> findReviewWords(Long userId, Long learningIndex, Pageable pageable);
+    // 查询需要复习的单词（分数 < 6，且不在最近5个中）
+    @Query("SELECT m FROM UserWordMastery m WHERE m.userId = :userId AND m.masteryScore < 6 AND m.wordId NOT IN :recentWordIds ORDER BY m.masteryScore ASC, m.lastLearnedAt ASC")
+    List<UserWordMastery> findReviewWords(Long userId, List<Long> recentWordIds, Pageable pageable);
+
+    // 统计陈生单词数量（分数 < 6）
+    long countByUserIdAndMasteryScoreLessThan(Long userId, Integer masteryScore);
 }

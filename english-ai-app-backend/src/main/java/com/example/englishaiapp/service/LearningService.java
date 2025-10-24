@@ -23,4 +23,11 @@ public interface LearningService {
      * @return 更新后的单词掌握度信息
      */
     UserWordMastery submitLearningResult(Long userId, Long wordId, boolean isCorrect);
+
+    /**
+     * 获取用户的陈生单词数量（分数 < 6）
+     * @param userId 用户ID
+     * @return 陈生单词数量
+     */
+    int getStrangeWordCount(Long userId);
 }
