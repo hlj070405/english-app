@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/learn")
 public class LearningController {
-
+    
     @Autowired
     private LearningService learningService;
 
@@ -42,6 +42,17 @@ public class LearningController {
 
         learningService.submitLearningResult(userId, request.getWordId(), request.isCorrect());
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/strange-count")
+    public ResponseEntity<Integer> getStrangeWordCount(
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        
+        // 临时硬编码用户ID，用于测试
+        Long userId = (userDetails != null) ? userDetails.getId() : 1L;
+
+        int count = learningService.getStrangeWordCount(userId);
+        return ResponseEntity.ok(count);
     }
 
     // DTO for submit request

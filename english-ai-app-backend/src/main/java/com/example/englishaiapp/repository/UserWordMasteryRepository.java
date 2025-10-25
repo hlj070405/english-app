@@ -21,4 +21,8 @@ public interface UserWordMasteryRepository extends JpaRepository<UserWordMastery
 
     // 统计陈生单词数量（分数 < 6）
     long countByUserIdAndMasteryScoreLessThan(Long userId, Integer masteryScore);
+
+    // 获取掌握度最低的前8个单词（用于生成文章）
+    @Query("SELECT m FROM UserWordMastery m WHERE m.userId = :userId ORDER BY m.masteryScore ASC, m.lastLearnedAt ASC")
+    List<UserWordMastery> findTop8ByUserIdOrderByMasteryScore(Long userId, Pageable pageable);
 }

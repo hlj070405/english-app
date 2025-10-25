@@ -56,6 +56,9 @@ public class User {
     @Column(columnDefinition = "TEXT")
     private String recentWordIds = "[]"; // 最近5个单词的ID（JSON格式）
 
+    @Column(columnDefinition = "BOOLEAN DEFAULT FALSE")
+    private Boolean articlesUnlocked = false; // 是否解锁定制文章（学习满16个单词后解锁）
+
     @CreationTimestamp
     private LocalDateTime createdAt;
 

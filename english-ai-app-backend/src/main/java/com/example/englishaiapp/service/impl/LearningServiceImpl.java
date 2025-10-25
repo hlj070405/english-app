@@ -6,6 +6,7 @@ import com.example.englishaiapp.domain.Word;
 import com.example.englishaiapp.repository.UserRepository;
 import com.example.englishaiapp.repository.UserWordMasteryRepository;
 import com.example.englishaiapp.repository.WordRepository;
+import com.example.englishaiapp.service.ArticleService;
 import com.example.englishaiapp.service.LearningService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
@@ -30,6 +31,9 @@ public class LearningServiceImpl implements LearningService {
 
     @Autowired
     private UserWordMasteryRepository userWordMasteryRepository;
+
+    @Autowired
+    private ArticleService articleService;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -86,16 +90,19 @@ public class LearningServiceImpl implements LearningService {
                 .findByUserIdAndWordId(userId, wordId)
                 .orElse(new UserWordMastery(userId, wordId, 0));
 
-        // 2. 更新打分
+        // 2. 更新打分逻辑
         if (mastery.getLastLearnedAt() == null) {
             // 首次学习
-            mastery.setMasteryScore(isCorrect ? 5 : 0);
+            // 答对直接毕业（分数>=6），避免短期内重复
+            mastery.setMasteryScore(isCorrect ? 6 : 0);
         } else {
             // 再次学习
             if (isCorrect) {
                 mastery.setMasteryScore(mastery.getMasteryScore() + 2);
+            } else {
+                // 答错扣分，让单词更容易被复习到
+                mastery.setMasteryScore(Math.max(0, mastery.getMasteryScore() - 2));
             }
-            // 答错保持不变
         }
 
         // 3. 更新时间
@@ -106,6 +113,9 @@ public class LearningServiceImpl implements LearningService {
 
         // 5. 更新用户的 recentWordIds 队列
         updateRecentWords(userId, wordId);
+
+        // 6. 检查是否达到解锁条件（16个单词）
+        checkAndUnlockArticles(userId);
 
         return mastery;
     }
@@ -132,27 +142,57 @@ public class LearningServiceImpl implements LearningService {
     }
 
     /**
-     * 更新用户的 recentWordIds（FIFO队列，最多5个）
+     * 更新用户的 recentWordIds（严格的FIFO队列，无重复，最多5个）
      */
     private void updateRecentWords(Long userId, Long wordId) {
-        User user = userRepository.findById(userId).orElseThrow();
-        List<Long> recentIds = parseRecentWordIds(user.getRecentWordIds());
+        User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found while updating recent words"));
+        List<Long> recentIds = new ArrayList<>(parseRecentWordIds(user.getRecentWordIds()));
 
-        // 移除旧的，添加新的
-        recentIds.remove(wordId); // 如果已存在，先移除
-        recentIds.add(wordId);    // 添加到末尾
+        // 1. 如果单词已存在，先移除，确保它会被移到队尾
+        recentIds.remove(wordId);
 
-        // 保持最多5个
-        if (recentIds.size() > 5) {
-            recentIds = recentIds.subList(recentIds.size() - 5, recentIds.size());
+        // 2. 将当前单词添加到队尾
+        recentIds.add(wordId);
+
+        // 3. 如果队列超长，从队首移除多余的元素，确保队列大小不超过5
+        while (recentIds.size() > 5) {
+            recentIds.remove(0); // 移除队首元素
         }
 
-        // 保存回数据库
+        // 4. 保存回数据库
         try {
             user.setRecentWordIds(objectMapper.writeValueAsString(recentIds));
             userRepository.save(user);
         } catch (Exception e) {
-            System.err.println("保存 recentWordIds 失败: " + e.getMessage());
+            // 在真实应用中，这里应该使用日志框架记录错误
+            System.err.println("序列化或保存 recentWordIds 失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 检查并解锁定制文章（学习满16个单词后）
+     */
+    private void checkAndUnlockArticles(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // 如果已经解锁，直接返回
+        if (Boolean.TRUE.equals(user.getArticlesUnlocked())) {
+            return;
+        }
+
+        // 检查是否达到解锁条件
+        if (user.getTotalWordsLearned() >= 16) {
+            user.setArticlesUnlocked(true);
+            userRepository.save(user);
+
+            // 立即生成2篇定制文章
+            try {
+                articleService.generateBatchForUser(userId, 2);
+                System.out.println("用户 " + userId + " 已解锁定制文章，生成2篇文章");
+            } catch (Exception e) {
+                System.err.println("生成解锁文章失败: " + e.getMessage());
+            }
         }
     }
 }

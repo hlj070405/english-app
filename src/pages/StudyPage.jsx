@@ -10,6 +10,8 @@ function StudyPage({ onNavigate }) {
   const [words, setWords] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [showContinuePrompt, setShowContinuePrompt] = useState(false)
+  const [strangeWordCount, setStrangeWordCount] = useState(0)
 
   // 👇 在组件函数内部，useState 声明之后添加
   useEffect(() => {
@@ -43,6 +45,16 @@ function StudyPage({ onNavigate }) {
     const handleKeyPress = (e) => {
       const key = e.key.toLowerCase()
       
+      // 如果显示选择界面，只监听 X 和 F
+      if (showContinuePrompt) {
+        if (key === 'x') {
+          handleContinue()
+        } else if (key === 'f') {
+          handleReturn()
+        }
+        return
+      }
+      
       if (key === 'z' && !isFlipped) {
         // Z键 - 不认识，翻转卡片查看释义，但不跳转
         setIsFlipped(true)
@@ -61,7 +73,7 @@ function StudyPage({ onNavigate }) {
 
     window.addEventListener('keydown', handleKeyPress)
     return () => window.removeEventListener('keydown', handleKeyPress)
-  }, [isFlipped, currentWord, words])
+  }, [isFlipped, currentWord, words, showContinuePrompt])
 
   // 只提交结果，不跳转
   const submitResultOnly = async (isCorrect) => {
@@ -74,7 +86,7 @@ function StudyPage({ onNavigate }) {
         credentials: 'include',
         body: JSON.stringify({ 
           wordId: words[currentWord].id, 
-          isCorrect 
+          correct: isCorrect 
         }),
       })
     } catch (error) {
@@ -94,10 +106,52 @@ function StudyPage({ onNavigate }) {
         setIsExiting(false)
       }, 50) // 极短延迟，确保状态更新
     } else {
-      // 完成所有单词
-      alert('🎉 太棒了！今天的单词学完了！')
-      onNavigate()
+      // 完成所有单词，显示选择界面
+      fetchStrangeWordCount()
+      setShowContinuePrompt(true)
     }
+  }
+
+  // 获取陌生单词数量
+  const fetchStrangeWordCount = async () => {
+    try {
+      const response = await fetch('/api/learn/strange-count', {
+        credentials: 'include'
+      })
+      if (response.ok) {
+        const count = await response.json()
+        setStrangeWordCount(count)
+      }
+    } catch (error) {
+      console.error('获取陌生单词数量失败:', error)
+    }
+  }
+
+  // 继续学习
+  const handleContinue = async () => {
+    setShowContinuePrompt(false)
+    setLoading(true)
+    try {
+      const response = await fetch('/api/learn/session?limit=20', {
+        credentials: 'include'
+      })
+      if (response.ok) {
+        const data = await response.json()
+        setWords(data)
+        setCurrentWord(0)
+        setIsFlipped(false)
+        setShowDontKnow(false)
+      }
+    } catch (error) {
+      console.error('加载新单词失败:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // 返回主页
+  const handleReturn = () => {
+    onNavigate()
   }
 
   // 所有 Hooks 已经调用完毕，现在可以处理条件性 return
@@ -126,6 +180,64 @@ function StudyPage({ onNavigate }) {
   }
 
   const word = words[currentWord]
+
+  // 显示选择界面
+  if (showContinuePrompt) {
+    return (
+      <div className="study-page" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100vh', gap: '2rem' }}>
+        <div style={{ textAlign: 'center' }}>
+          <h1 style={{ fontSize: '3rem', marginBottom: '1rem' }}>🎉</h1>
+          <h2 style={{ fontSize: '2rem', color: '#333', marginBottom: '0.5rem' }}>太棒了！</h2>
+          <p style={{ fontSize: '1.2rem', color: '#666' }}>已完成 {words.length} 个单词</p>
+          {strangeWordCount > 0 && (
+            <p style={{ fontSize: '1rem', color: '#ff6b6b', marginTop: '1rem' }}>
+              当前有 {strangeWordCount} 个陌生单词需要复习
+            </p>
+          )}
+        </div>
+        
+        <div style={{ display: 'flex', gap: '2rem', marginTop: '2rem' }}>
+          <button 
+            onClick={handleContinue}
+            style={{
+              padding: '1rem 3rem',
+              fontSize: '1.2rem',
+              backgroundColor: '#4CAF50',
+              color: 'white',
+              border: 'none',
+              borderRadius: '12px',
+              cursor: 'pointer',
+              transition: 'all 0.3s',
+              boxShadow: '0 4px 12px rgba(76, 175, 80, 0.3)'
+            }}
+            onMouseEnter={(e) => e.target.style.transform = 'translateY(-2px)'}
+            onMouseLeave={(e) => e.target.style.transform = 'translateY(0)'}
+          >
+            继续学习 (X)
+          </button>
+          
+          <button 
+            onClick={handleReturn}
+            style={{
+              padding: '1rem 3rem',
+              fontSize: '1.2rem',
+              backgroundColor: '#666',
+              color: 'white',
+              border: 'none',
+              borderRadius: '12px',
+              cursor: 'pointer',
+              transition: 'all 0.3s',
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)'
+            }}
+            onMouseEnter={(e) => e.target.style.transform = 'translateY(-2px)'}
+            onMouseLeave={(e) => e.target.style.transform = 'translateY(0)'}
+          >
+            返回主页 (F)
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="study-page">

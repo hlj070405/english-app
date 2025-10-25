@@ -1,3 +1,6 @@
+/* 导入磨砂玻璃设计系统 */
+@import './styles/glass-morphism.css';
+
 * {
   margin: 0;
   padding: 0;
@@ -84,23 +87,23 @@ html {
   z-index: 1;
 }
 
-/* 无限循环扫光 - 用于强调按钮等 */
+/* 无限循环扫光 - 用于强调按钮等（减弱透明度） */
 .shine-effect {
   background: linear-gradient(
     45deg,
     transparent 30%,
-    rgba(255, 255, 255, 0.2) 50%,
+    rgba(255, 255, 255, 0.05) 50%,
     transparent 70%
   );
   animation: shine-infinite 3s infinite;
 }
 
-/* 一次性扫光 - 用于签到、完成等反馈 */
+/* 一次性扫光 - 用于签到、完成等反馈（减弱透明度） */
 .shine-effect-once {
   background: linear-gradient(
     45deg,
     transparent 30%,
-    rgba(255, 255, 255, 0.6) 50%,
+    rgba(255, 255, 255, 0.15) 50%,
     transparent 70%
   );
 }

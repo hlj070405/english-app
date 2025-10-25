@@ -2,38 +2,75 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import './ArticleStudyPage.css'
 
-// 测试数据
-const TEST_ARTICLE = {
-  title: "The Power of Innovation",
-  content: `In today's fast-paced world, technology continues to evolve at an [unprecedented,史无前例的,传统的,缓慢的] rate. The [persistence,坚持,放弃,犹豫] of scientists has led to breakthrough discoveries that transform our lives.
-
-Companies must show [dedication,奉献,利润,规模] to stay competitive in the market. Recent [innovation,创新,传统,历史] has made communication easier and more efficient. Success requires both [courage,勇气,金钱,运气] and hard work.
-
-Through continuous learning and [adaptation,适应,拒绝,忽视], we can embrace the changes that technology brings to our daily lives.`
-}
-
-function ArticleStudyPage({ onNavigate }) {
+function ArticleStudyPage({ onNavigate, initialMode = 'generic' }) {
+  const [article, setArticle] = useState(null)
   const [questions, setQuestions] = useState([])
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
   const [userInput, setUserInput] = useState('') // 用户输入
   const [answeredQuestions, setAnsweredQuestions] = useState({})
-  // 单词库（供用户选择的单词）
-  const [wordBank, setWordBank] = useState([
-    { word: 'unprecedented', meaning: '史无前例的', status: 'unused', hasBeenWrong: false }, // unused, correct, wrong, wrongAnswer
-    { word: 'persistence', meaning: '坚持', status: 'unused', hasBeenWrong: false },
-    { word: 'dedication', meaning: '奉献', status: 'unused', hasBeenWrong: false },
-    { word: 'innovation', meaning: '创新', status: 'unused', hasBeenWrong: false },
-    { word: 'courage', meaning: '勇气', status: 'unused', hasBeenWrong: false },
-    { word: 'adaptation', meaning: '适应', status: 'unused', hasBeenWrong: false },
-    { word: 'achievement', meaning: '成就', status: 'unused', hasBeenWrong: false },
-    { word: 'confidence', meaning: '信心', status: 'unused', hasBeenWrong: false }
-  ])
+  const [wordBank, setWordBank] = useState([])
   const [isShaking, setIsShaking] = useState(false) // 抖动状态
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [articleMode, setArticleMode] = useState(initialMode) // generic 或 custom
+  const [articleId, setArticleId] = useState(null) // 当前文章ID（定制模式用）
 
-  // 解析文章内容
+  // 从后端获取文章
+  const fetchArticle = async (mode) => {
+    try {
+      setLoading(true)
+      const response = await fetch(`/api/article/next?type=${mode}`, {
+        credentials: 'include'
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        if (errorData.code === 'ARTICLES_NOT_UNLOCKED') {
+          setError('NOT_UNLOCKED')
+        } else if (errorData.code === 'NO_WORDS_AVAILABLE') {
+          setError('NO_WORDS')
+        } else if (errorData.code === 'NO_GENERIC_ARTICLES') {
+          setError('NO_GENERIC')
+        } else {
+          setError('GENERATION_FAILED')
+        }
+        return
+      }
+
+      const data = await response.json()
+      setArticle(data)
+      setArticleId(data.articleId) // 保存文章ID（定制模式有值）
+      
+      // 解析文章生成题目
+      const parsed = parseArticle(data.content, data.wordBank)
+      setQuestions(parsed)
+      
+      // 初始化单词库
+      const initialWordBank = data.wordBank.map(w => ({
+        word: w.word,
+        meaning: w.meaning,
+        status: 'unused',
+        hasBeenWrong: false
+      }))
+      setWordBank(initialWordBank)
+      
+      // 重置答题状态
+      setAnsweredQuestions({})
+      setCurrentQuestionIndex(0)
+      setUserInput('')
+      
+      setError(null)
+    } catch (err) {
+      console.error('获取文章失败:', err)
+      setError('NETWORK_ERROR')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // 初始加载文章
   useEffect(() => {
-    const parsed = parseArticle(TEST_ARTICLE.content)
-    setQuestions(parsed)
+    fetchArticle(articleMode)
   }, [])
 
   // 键盘监听
@@ -61,6 +98,27 @@ function ArticleStudyPage({ onNavigate }) {
     window.addEventListener('keydown', handleKeyPress)
     return () => window.removeEventListener('keydown', handleKeyPress)
   }, [currentQuestionIndex, userInput, answeredQuestions])
+
+  // 完成文章并加载下一篇
+  const handleArticleComplete = async () => {
+    if (articleMode === 'custom' && articleId) {
+      try {
+        await fetch('/api/article/complete', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({ articleId })
+        })
+      } catch (err) {
+        console.error('完成文章失败:', err)
+      }
+    }
+    
+    // 加载下一篇
+    await fetchArticle(articleMode)
+  }
 
   // 提交答案
   const handleSubmitAnswer = () => {
@@ -105,6 +163,11 @@ function ArticleStudyPage({ onNavigate }) {
         setTimeout(() => {
           setCurrentQuestionIndex(currentQuestionIndex + 1)
         }, 100) // 100ms延迟，体验更好
+      } else {
+        // 所有题目完成，加载下一篇文章
+        setTimeout(() => {
+          handleArticleComplete()
+        }, 500)
       }
     } else {
       // 答错：标记两个单词（输入的错误词 + 正确答案词）
@@ -127,7 +190,64 @@ function ArticleStudyPage({ onNavigate }) {
     }
   }
 
-  if (questions.length === 0) {
+  // 加载状态
+  if (loading) {
+    return (
+      <div className="article-study-page" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <p style={{ fontSize: '1.5rem', color: '#666' }}>正在加载文章...</p>
+      </div>
+    )
+  }
+
+  // 错误状态
+  if (error) {
+    let errorTitle = ''
+    let errorMessage = ''
+    
+    switch (error) {
+      case 'NOT_UNLOCKED':
+        errorTitle = '🔒 定制文章未解锁'
+        errorMessage = '请学习满16个单词后再试，或选择通用模式'
+        break
+      case 'NO_WORDS':
+        errorTitle = '🎉 你背的单词已经学完啦！'
+        errorMessage = '去刷单词或继续文章题目，或者返回主界面'
+        break
+      case 'NO_GENERIC':
+        errorTitle = '😢 没有可用的通用文章'
+        errorMessage = '请联系管理员添加文章模板'
+        break
+      default:
+        errorTitle = '😢 文章加载失败'
+        errorMessage = '请稍后重试'
+    }
+    
+    return (
+      <div className="article-study-page" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100vh', gap: '2rem' }}>
+        <h2 style={{ fontSize: '2rem', color: error === 'NO_WORDS' ? '#333' : '#ef4444' }}>{errorTitle}</h2>
+        <p style={{ fontSize: '1.2rem', color: '#666' }}>{errorMessage}</p>
+        
+        <button 
+            onClick={onNavigate}
+            style={{
+              padding: '1rem 2rem',
+              fontSize: '1.1rem',
+              backgroundColor: '#666',
+              color: 'white',
+              border: 'none',
+              borderRadius: '12px',
+              cursor: 'pointer',
+              transition: 'all 0.3s',
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)'
+            }}
+          >
+            返回主页
+        </button>
+      </div>
+    )
+  }
+
+  if (!article || questions.length === 0) {
     return <div className="loading">加载中...</div>
   }
 
@@ -141,6 +261,9 @@ function ArticleStudyPage({ onNavigate }) {
         <button className="back-btn" onClick={onNavigate}>←</button>
         <div className="progress-text">
           {Object.keys(answeredQuestions).length} / {questions.length}
+          <span style={{ marginLeft: '10px', fontSize: '0.9em', opacity: 0.7 }}>
+            ({articleMode === 'generic' ? '通用' : '定制'})
+          </span>
         </div>
       </div>
 
@@ -148,10 +271,10 @@ function ArticleStudyPage({ onNavigate }) {
       <div className="article-study-content">
         {/* 左侧：文章区 */}
         <div className="article-section">
-          <h2 className="article-title">{TEST_ARTICLE.title}</h2>
+          <h2 className="article-title">{article.title}</h2>
           <div className="article-body">
             {renderArticle(
-              TEST_ARTICLE.content, 
+              article.content, 
               questions, 
               currentQuestionIndex, 
               answeredQuestions,
@@ -177,27 +300,30 @@ function ArticleStudyPage({ onNavigate }) {
   )
 }
 
-// 解析文章
-function parseArticle(content) {
+// 解析文章（适配 [word] 格式）
+function parseArticle(content, wordBank) {
   const questions = []
-  const regex = /\[(.*?)\]/g
+  const regex = /\[([a-zA-Z]+)\]/g
   let match
   let questionIndex = 0
 
+  // 创建单词到释义的映射
+  const wordMeaningMap = {}
+  wordBank.forEach(item => {
+    wordMeaningMap[item.word.toLowerCase()] = item.meaning
+  })
+
   while ((match = regex.exec(content)) !== null) {
-    const parts = match[1].split(',').map(s => s.trim())
+    const word = match[1]
+    const meaning = wordMeaningMap[word.toLowerCase()] || ''
     
-    if (parts.length >= 3) {
-      const [word, ...options] = parts
-      
-      questions.push({
-        id: questionIndex++,
-        word: word,  // 英文单词
-        position: match.index,
-        options: options,  // 中文选项
-        correctAnswer: word  // 正确答案是英文单词本身
-      })
-    }
+    questions.push({
+      id: questionIndex++,
+      word: word,
+      position: match.index,
+      meaning: meaning,
+      correctAnswer: word
+    })
   }
 
   return questions

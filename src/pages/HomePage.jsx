@@ -1,11 +1,13 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import './HomePage.css'
-import defaultAvatar from './Iconfont.svg';
+import defaultAvatar from './Iconfont.svg'
+import backgroundImage from './background.jpg'
 
 function HomePage({ user, onLogout, onNavigate, onNavigateArticle }) {
   const [isCheckedIn, setIsCheckedIn] = useState(false)
   const [showShine, setShowShine] = useState(false)
+  const [articleMode, setArticleMode] = useState('generic') // 'generic' 或 'custom'
 
   const handleCheckIn = () => {
     if (!isCheckedIn) {
@@ -17,7 +19,7 @@ function HomePage({ user, onLogout, onNavigate, onNavigateArticle }) {
   }
 
   return (
-    <div className="home-page">
+    <div className="home-page" style={{ backgroundImage: `url(${backgroundImage})` }}>
       {/* 网格背景 */}
       <div className="grid-background"></div>
       
@@ -47,9 +49,9 @@ function HomePage({ user, onLogout, onNavigate, onNavigateArticle }) {
             <div className="user-info">
               <div className="avatar">🎯</div>
               <div className="user-details">
-                <h2>LEARNER_001</h2>
+                <h2>学习者_001</h2>
                 <div className="level-badge">
-                  <span className="level-text">LEVEL 12</span>
+                  <span className="level-text">等级 12</span>
                   <span className="level-icon">▸▸▸</span>
                 </div>
               </div>
@@ -57,7 +59,7 @@ function HomePage({ user, onLogout, onNavigate, onNavigateArticle }) {
             <div className="xp-bar">
               <div className="xp-fill" style={{ width: '60%' }}></div>
             </div>
-            <div className="xp-text">1,240 / 2,000 XP</div>
+            <div className="xp-text">1,240 / 2,000 经验</div>
           </motion.div>
 
           {/* 签到卡片 & 能力值 */}
@@ -82,10 +84,10 @@ function HomePage({ user, onLogout, onNavigate, onNavigateArticle }) {
                 <>
                   <div className="streak-header">
                     <span className="streak-icon">🔥</span>
-                    <span className="streak-label">STREAK</span>
+                    <span className="streak-label">连续签到</span>
                   </div>
                   <div className="streak-number">12</div>
-                  <div className="streak-text">DAYS</div>
+                  <div className="streak-text">天</div>
                 </>
               )}
             </motion.div>
@@ -120,21 +122,22 @@ function HomePage({ user, onLogout, onNavigate, onNavigateArticle }) {
           >
             <div className="leaderboard-header">
               <span className="leader-slash">///</span>
-              <span>LEADERBOARD</span>
+              <span>排行榜</span>
               <span className="leader-arrow">▸</span>
             </div>
             <div className="leader-stats">
               <span className="rank">#15</span>
               <span className="change">↑3</span>
-              <span className="points">1,234 XP</span>
+              <span className="points">1,234 经验</span>
             </div>
           </motion.div>
         </div>
 
-        {/* 右侧区域 - 每日任务 */}
+        {/* 右侧区域 - 学习模块 */}
         <div className="right-section">
+          {/* WORD CARDS */}
           <motion.div 
-            className="quest-card gradient-card"
+            className="quest-card-small gradient-card"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
@@ -143,20 +146,16 @@ function HomePage({ user, onLogout, onNavigate, onNavigateArticle }) {
             <div className="shine-effect"></div>
             <div className="quest-header">
               <span className="quest-icon">⚡</span>
-              <span className="quest-title">WORD CARDS</span>
+              <span className="quest-title">单词卡片</span>
             </div>
             <div className="quest-list">
               <div className="quest-item">
                 <span className="quest-bullet">▸</span>
-                <span>20 NEW WORDS</span>
+                <span>20个新词</span>
               </div>
               <div className="quest-item">
                 <span className="quest-bullet">▸</span>
-                <span>FLIP & LEARN</span>
-              </div>
-              <div className="quest-item">
-                <span className="quest-bullet">▸</span>
-                <span>KEYBOARD FAST</span>
+                <span>翻转学习</span>
               </div>
             </div>
             <button className="quest-btn">
@@ -165,31 +164,100 @@ function HomePage({ user, onLogout, onNavigate, onNavigateArticle }) {
             </button>
           </motion.div>
 
-          {/* 文章学习卡片 */}
+          {/* ARTICLE MODE */}
           <motion.div 
-            className="article-card gradient-card-alt"
+            className="quest-card-small gradient-card-alt"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.6 }}
-            onClick={onNavigateArticle}
           >
             <div className="shine-effect"></div>
             <div className="quest-header">
               <span className="quest-icon">📝</span>
-              <span className="quest-title">ARTICLE MODE</span>
+              <span className="quest-title">文章模式</span>
+            </div>
+            
+            {/* 嵌入式切换开关 */}
+            <div className="toggle-container-inline">
+              <span className={`toggle-label ${articleMode === 'generic' ? 'active' : ''}`}>通用</span>
+              <div 
+                className="toggle-switch"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setArticleMode(articleMode === 'generic' ? 'custom' : 'generic')
+                }}
+              >
+                <div className={`toggle-slider ${articleMode === 'custom' ? 'active' : ''}`}></div>
+              </div>
+              <span className={`toggle-label ${articleMode === 'custom' ? 'active' : ''}`}>定制</span>
+            </div>
+            
+            <div className="quest-list">
+              <div className="quest-item">
+                <span className="quest-bullet">▸</span>
+                <span>阅读文章</span>
+              </div>
+              <div className="quest-item">
+                <span className="quest-bullet">▸</span>
+                <span>填空练习</span>
+              </div>
+            </div>
+            <button className="quest-btn" onClick={() => onNavigateArticle(articleMode)}>
+              <span>START</span>
+              <span className="btn-arrow">▸</span>
+            </button>
+          </motion.div>
+
+          {/* 我的词库 */}
+          <motion.div 
+            className="quest-card-small gradient-card-purple"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.7 }}
+            onClick={() => alert('我的词库功能开发中...')}
+          >
+            <div className="shine-effect"></div>
+            <div className="quest-header">
+              <span className="quest-icon">📚</span>
+              <span className="quest-title">我的词库</span>
             </div>
             <div className="quest-list">
               <div className="quest-item">
                 <span className="quest-bullet">▸</span>
-                <span>READ ARTICLE</span>
+                <span>已掌握单词</span>
               </div>
               <div className="quest-item">
                 <span className="quest-bullet">▸</span>
-                <span>FILL BLANKS</span>
+                <span>复习管理</span>
+              </div>
+            </div>
+            <button className="quest-btn">
+              <span>START</span>
+              <span className="btn-arrow">▸</span>
+            </button>
+          </motion.div>
+
+          {/* 真题练习 */}
+          <motion.div 
+            className="quest-card-small gradient-card-orange"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.8 }}
+            onClick={() => alert('真题练习功能开发中...')}
+          >
+            <div className="shine-effect"></div>
+            <div className="quest-header">
+              <span className="quest-icon">🎯</span>
+              <span className="quest-title">真题练习</span>
+            </div>
+            <div className="quest-list">
+              <div className="quest-item">
+                <span className="quest-bullet">▸</span>
+                <span>历年真题</span>
               </div>
               <div className="quest-item">
                 <span className="quest-bullet">▸</span>
-                <span>COLLECT CARDS</span>
+                <span>模拟考试</span>
               </div>
             </div>
             <button className="quest-btn">
