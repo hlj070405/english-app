@@ -4,10 +4,9 @@ import './HomePage.css'
 import defaultAvatar from './Iconfont.svg'
 import backgroundImage from './background.jpg'
 
-function HomePage({ user, onLogout, onNavigate, onNavigateArticle }) {
+function HomePage({ user, onLogout, onNavigate, onNavigateArticle, articleMode = 'generic', onArticleModeChange }) {
   const [isCheckedIn, setIsCheckedIn] = useState(false)
   const [showShine, setShowShine] = useState(false)
-  const [articleMode, setArticleMode] = useState('generic') // 'generic' 或 'custom'
 
   const handleCheckIn = () => {
     if (!isCheckedIn) {
@@ -184,7 +183,8 @@ function HomePage({ user, onLogout, onNavigate, onNavigateArticle }) {
                 className="toggle-switch"
                 onClick={(e) => {
                   e.stopPropagation()
-                  setArticleMode(articleMode === 'generic' ? 'custom' : 'generic')
+                  const nextMode = articleMode === 'generic' ? 'custom' : 'generic'
+                  onArticleModeChange?.(nextMode)
                 }}
               >
                 <div className={`toggle-slider ${articleMode === 'custom' ? 'active' : ''}`}></div>

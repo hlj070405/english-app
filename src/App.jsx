@@ -9,6 +9,12 @@ import './App.css'
 function App() {
   const [user, setUser] = useState(null) // 用户状态
   const [currentPage, setCurrentPage] = useState('home') // 'home', 'study', 'article'
+  const [selectedArticleMode, setSelectedArticleMode] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('articleMode') || 'generic'
+    }
+    return 'generic'
+  })
 
   // 检查localStorage以实现持久化登录
   useEffect(() => {
@@ -33,6 +39,12 @@ function App() {
     duration: 0.4,
     ease: 'easeInOut'
   }
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('articleMode', selectedArticleMode)
+    }
+  }, [selectedArticleMode])
 
   const handleLoginSuccess = (loggedInUser) => {
     setUser(loggedInUser);
@@ -64,7 +76,12 @@ function App() {
               user={user}
               onLogout={handleLogout}
               onNavigate={() => setCurrentPage('study')}
-              onNavigateArticle={() => setCurrentPage('article')}
+              articleMode={selectedArticleMode}
+              onArticleModeChange={(mode) => setSelectedArticleMode(mode)}
+              onNavigateArticle={(mode) => {
+                setSelectedArticleMode(mode)
+                setCurrentPage('article')
+              }}
             />
           </motion.div>
         )}
@@ -89,7 +106,10 @@ function App() {
             exit="exit"
             transition={pageTransition}
           >
-            <ArticleStudyPage onNavigate={() => setCurrentPage('home')} />
+            <ArticleStudyPage 
+              onNavigate={() => setCurrentPage('home')} 
+              initialMode={selectedArticleMode}
+            />
           </motion.div>
         )}
       </AnimatePresence>

@@ -73,7 +73,7 @@ public class QwenClient {
         sb.append("要求：\n");
         sb.append("1. 文章主题围绕日常学习、成长或生活，内容积极向上\n");
         sb.append("2. 难度等级：").append(getDifficultyDescription(difficulty)).append("\n");
-        sb.append("3. 每个单词在文章中只出现一次，并且必须用 [(单词)] 的格式标记出来\n");
+        sb.append("3. 每个单词在文章中只出现一次，并且必须用 [单词] 的格式标记出来\n");
         sb.append("4. 文章要自然流畅，上下文要能帮助读者理解单词含义\n");
         sb.append("5. 请直接返回JSON格式：{\"title\": \"文章标题\", \"content\": \"文章正文...\"}\n\n");
         

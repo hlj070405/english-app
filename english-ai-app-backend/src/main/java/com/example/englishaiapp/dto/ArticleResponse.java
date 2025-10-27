@@ -1,6 +1,7 @@
 package com.example.englishaiapp.dto;
 
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import java.util.List;
 
 @Data
@@ -11,6 +12,7 @@ public class ArticleResponse {
     private List<WordItem> wordBank;
 
     @Data
+    @NoArgsConstructor
     public static class WordItem {
         private Long id;
         private String word;

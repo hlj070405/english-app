@@ -71,7 +71,21 @@ function ArticleStudyPage({ onNavigate, initialMode = 'generic' }) {
   // 初始加载文章
   useEffect(() => {
     fetchArticle(articleMode)
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('articleMode', articleMode)
+    }
   }, [])
+
+  // 当初始模式变化时，同步状态并重新拉取文章
+  useEffect(() => {
+    if (initialMode && initialMode !== articleMode) {
+      setArticleMode(initialMode)
+      fetchArticle(initialMode)
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('articleMode', initialMode)
+      }
+    }
+  }, [initialMode])
 
   // 键盘监听
   useEffect(() => {
