@@ -14,6 +14,13 @@ function ArticleStudyPage({ onNavigate, initialMode = 'generic' }) {
   const [error, setError] = useState(null)
   const [articleMode, setArticleMode] = useState(initialMode) // generic 或 custom
   const [articleId, setArticleId] = useState(null) // 当前文章ID（定制模式用）
+  const [showMeaning, setShowMeaning] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('showMeaning')
+      return saved !== null ? saved === 'true' : true // 默认显示
+    }
+    return true
+  })
 
   // 从后端获取文章
   const fetchArticle = async (mode) => {
@@ -45,18 +52,36 @@ function ArticleStudyPage({ onNavigate, initialMode = 'generic' }) {
       const parsed = parseArticle(data.content, data.wordBank)
       setQuestions(parsed)
       
-      // 初始化单词库
+      // 初始化单词库（保留后端返回的 state）
       const initialWordBank = data.wordBank.map(w => ({
         word: w.word,
         meaning: w.meaning,
-        status: 'unused',
-        hasBeenWrong: false
+        status: w.state || 'unused', // 使用后端的 state，默认 unused
+        hasBeenWrong: w.state === 'wrong' // 如果后端标记为 wrong，显示棕色小点
       }))
       setWordBank(initialWordBank)
       
-      // 重置答题状态
-      setAnsweredQuestions({})
-      setCurrentQuestionIndex(0)
+      // 根据后端状态恢复答题进度
+      const answeredMap = {}
+      let firstUnanswered = -1 // 初始化为 -1 表示还没找到
+      
+      parsed.forEach((q, index) => {
+        const wordItem = data.wordBank.find(w => w.word.toLowerCase() === q.word.toLowerCase())
+        if (wordItem && wordItem.state && wordItem.state !== 'unused') {
+          answeredMap[index] = wordItem.state // 'correct' or 'wrong'
+        } else if (firstUnanswered === -1) {
+          // 找到第一个未答的题目
+          firstUnanswered = index
+        }
+      })
+      
+      // 如果所有题目都答过了，从头开始（或者可以设为最后一题）
+      if (firstUnanswered === -1) {
+        firstUnanswered = 0
+      }
+      
+      setAnsweredQuestions(answeredMap)
+      setCurrentQuestionIndex(firstUnanswered)
       setUserInput('')
       
       setError(null)
@@ -86,6 +111,13 @@ function ArticleStudyPage({ onNavigate, initialMode = 'generic' }) {
       }
     }
   }, [initialMode])
+
+  // 持久化 showMeaning 状态
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('showMeaning', showMeaning.toString())
+    }
+  }, [showMeaning])
 
   // 键盘监听
   useEffect(() => {
@@ -153,7 +185,7 @@ function ArticleStudyPage({ onNavigate, initialMode = 'generic' }) {
       return
     }
 
-    const isCorrect = inputWord === correctWord
+    const isCorrect = inputWord === correctWord.toLowerCase()
 
     if (isCorrect) {
       // 答对：更新单词库状态为correct
@@ -168,6 +200,11 @@ function ArticleStudyPage({ onNavigate, initialMode = 'generic' }) {
         ...prev,
         [currentQuestionIndex]: 'correct'
       }))
+
+      // 同步到后端（定制模式）
+      if (articleMode === 'custom' && articleId) {
+        updateWordProgressToBackend(inputWord, 'correct')
+      }
 
       // 清空输入
       setUserInput('')
@@ -195,12 +232,38 @@ function ArticleStudyPage({ onNavigate, initialMode = 'generic' }) {
         return w
       }))
 
+      // 同步到后端（定制模式，只记录正确答案的错误状态）
+      if (articleMode === 'custom' && articleId) {
+        updateWordProgressToBackend(correctWord, 'wrong')
+      }
+
       // 抖动
       setIsShaking(true)
       setTimeout(() => {
         setIsShaking(false)
         setUserInput('')
       }, 500)
+    }
+  }
+
+  // 同步单词进度到后端
+  const updateWordProgressToBackend = async (word, state) => {
+    try {
+      await fetch('/api/article/progress', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          articleId,
+          word,
+          state
+        })
+      })
+    } catch (err) {
+      console.error('同步单词进度失败:', err)
+      // 不阻塞用户继续答题
     }
   }
 
@@ -305,7 +368,7 @@ function ArticleStudyPage({ onNavigate, initialMode = 'generic' }) {
 
         {/* 右侧：单词库 */}
         <div className="word-bank-section">
-          <WordBank words={wordBank} />
+          <WordBank words={wordBank} showMeaning={showMeaning} onToggleMeaning={() => setShowMeaning(!showMeaning)} />
         </div>
       </div>
 
@@ -404,12 +467,24 @@ function InteractiveWord({ word, isCurrent, status, userInput, isShaking }) {
 }
 
 // 单词库组件
-function WordBank({ words }) {
+function WordBank({ words, showMeaning, onToggleMeaning }) {
   return (
     <div className="word-bank-container">
       <div className="word-bank-title">
-        <span className="bank-icon">📝</span>
-        <span>单词库</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span className="bank-icon">📝</span>
+          <span>单词库</span>
+        </div>
+        <div 
+          className="meaning-toggle"
+          onClick={onToggleMeaning}
+          title={showMeaning ? '隐藏中文' : '显示中文'}
+        >
+          <span style={{ fontSize: '12px', marginRight: '6px' }}>中</span>
+          <div className={`toggle-switch-small ${showMeaning ? 'active' : ''}`}>
+            <div className="toggle-slider-small"></div>
+          </div>
+        </div>
       </div>
       <div className="word-bank-grid">
         {words.map((word, index) => (
@@ -425,7 +500,7 @@ function WordBank({ words }) {
               <div className="wrong-dot"></div>
             )}
             <div className="bank-word">{word.word}</div>
-            <div className="bank-meaning">{word.meaning}</div>
+            {showMeaning && <div className="bank-meaning">{word.meaning}</div>}
           </motion.div>
         ))}
       </div>

@@ -24,8 +24,7 @@ public class LearningController {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestParam(defaultValue = "20") int limit) {
         
-        // 临时硬编码用户ID，用于测试
-        Long userId = (userDetails != null) ? userDetails.getId() : 1L; 
+        Long userId = userDetails.getId(); 
 
         List<Word> words = learningService.getLearningSession(userId, limit);
         List<WordDTO> wordDTOs = words.stream().map(WordDTO::new).collect(Collectors.toList());
@@ -37,8 +36,7 @@ public class LearningController {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestBody LearningResultRequest request) {
 
-        // 临时硬编码用户ID，用于测试
-        Long userId = (userDetails != null) ? userDetails.getId() : 1L;
+        Long userId = userDetails.getId();
 
         learningService.submitLearningResult(userId, request.getWordId(), request.isCorrect());
         return ResponseEntity.ok().build();
@@ -48,8 +46,7 @@ public class LearningController {
     public ResponseEntity<Integer> getStrangeWordCount(
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         
-        // 临时硬编码用户ID，用于测试
-        Long userId = (userDetails != null) ? userDetails.getId() : 1L;
+        Long userId = userDetails.getId();
 
         int count = learningService.getStrangeWordCount(userId);
         return ResponseEntity.ok(count);

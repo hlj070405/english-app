@@ -90,11 +90,20 @@ public class LearningServiceImpl implements LearningService {
                 .findByUserIdAndWordId(userId, wordId)
                 .orElse(new UserWordMastery(userId, wordId, 0));
 
+        // 记录是否是首次学习
+        boolean isFirstTime = (mastery.getLastLearnedAt() == null);
+
         // 2. 更新打分逻辑
-        if (mastery.getLastLearnedAt() == null) {
+        if (isFirstTime) {
             // 首次学习
             // 答对直接毕业（分数>=6），避免短期内重复
             mastery.setMasteryScore(isCorrect ? 6 : 0);
+            
+            // 更新用户的 totalWordsLearned
+            User user = userRepository.findById(userId)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+            user.setTotalWordsLearned(user.getTotalWordsLearned() + 1);
+            userRepository.save(user);
         } else {
             // 再次学习
             if (isCorrect) {

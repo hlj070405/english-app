@@ -4,11 +4,15 @@ import HomePage from './pages/HomePage'
 import StudyPage from './pages/StudyPage'
 import ArticleStudyPage from './pages/ArticleStudyPage'
 import AuthPage from './pages/AuthPage'
+import AIChatPage from './pages/AIChatPage'
+import MyVocabularyPage from './pages/MyVocabularyPage'
+import ExamPracticePage from './pages/ExamPracticePage'
 import './App.css'
 
 function App() {
   const [user, setUser] = useState(null) // 用户状态
-  const [currentPage, setCurrentPage] = useState('home') // 'home', 'study', 'article'
+  const [currentPage, setCurrentPage] = useState('home') // 'home', 'study', 'article', 'ai-chat', 'vocabulary', 'exam'
+  const [aiInitialQuestion, setAiInitialQuestion] = useState('')
   const [selectedArticleMode, setSelectedArticleMode] = useState(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('articleMode') || 'generic'
@@ -16,17 +20,35 @@ function App() {
     return 'generic'
   })
 
-  // 检查localStorage以实现持久化登录
+  // 检查localStorage以实现持久化登录，并验证 Session 是否有效
   useEffect(() => {
-    try {
-      const storedUser = localStorage.getItem('user');
-      if (storedUser) {
-        setUser(JSON.parse(storedUser));
+    const checkSession = async () => {
+      try {
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) {
+          // 验证 Session 是否还有效
+          const response = await fetch('/api/auth/me', {
+            credentials: 'include'
+          });
+          
+          if (response.ok) {
+            const userData = await response.json();
+            setUser(userData);
+            localStorage.setItem('user', JSON.stringify(userData));
+          } else {
+            // Session 已失效，清除本地数据
+            localStorage.removeItem('user');
+            setUser(null);
+          }
+        }
+      } catch (error) {
+        console.error("Session validation failed", error);
+        localStorage.removeItem('user');
+        setUser(null);
       }
-    } catch (error) {
-      console.error("Failed to parse user from localStorage", error);
-      localStorage.removeItem('user');
-    }
+    };
+    
+    checkSession();
   }, []);
 
   const pageVariants = {
@@ -51,9 +73,18 @@ function App() {
     setCurrentPage('home');
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('user');
-    setUser(null);
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include'
+      });
+    } catch (err) {
+      console.error('Logout failed:', err);
+    } finally {
+      localStorage.removeItem('user');
+      setUser(null);
+    }
   };
 
   if (!user) {
@@ -75,7 +106,24 @@ function App() {
             <HomePage 
               user={user}
               onLogout={handleLogout}
-              onNavigate={() => setCurrentPage('study')}
+              onNavigate={(page, data) => {
+                switch (page) {
+                  case 'ai-chat':
+                    setAiInitialQuestion(data || '')
+                    setCurrentPage('ai-chat')
+                    break
+                  case 'vocabulary':
+                    setCurrentPage('vocabulary')
+                    break
+                  case 'exam':
+                    setCurrentPage('exam')
+                    break
+                  case 'study':
+                  default:
+                    setCurrentPage('study')
+                    break
+                }
+              }}
               articleMode={selectedArticleMode}
               onArticleModeChange={(mode) => setSelectedArticleMode(mode)}
               onNavigateArticle={(mode) => {
@@ -109,6 +157,49 @@ function App() {
             <ArticleStudyPage 
               onNavigate={() => setCurrentPage('home')} 
               initialMode={selectedArticleMode}
+            />
+          </motion.div>
+        )}
+        {currentPage === 'ai-chat' && (
+          <motion.div
+            key="ai-chat"
+            variants={pageVariants}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            transition={pageTransition}
+          >
+            <AIChatPage 
+              initialQuestion={aiInitialQuestion}
+              onBack={() => setCurrentPage('home')}
+            />
+          </motion.div>
+        )}
+        {currentPage === 'vocabulary' && (
+          <motion.div
+            key="vocabulary"
+            variants={pageVariants}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            transition={pageTransition}
+          >
+            <MyVocabularyPage 
+              onBack={() => setCurrentPage('home')}
+            />
+          </motion.div>
+        )}
+        {currentPage === 'exam' && (
+          <motion.div
+            key="exam"
+            variants={pageVariants}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            transition={pageTransition}
+          >
+            <ExamPracticePage 
+              onBack={() => setCurrentPage('home')}
             />
           </motion.div>
         )}

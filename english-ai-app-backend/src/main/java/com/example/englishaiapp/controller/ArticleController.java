@@ -1,6 +1,7 @@
 package com.example.englishaiapp.controller;
 
 import com.example.englishaiapp.dto.ArticleResponse;
+import com.example.englishaiapp.dto.WordProgressRequest;
 import com.example.englishaiapp.security.CustomUserDetails;
 import com.example.englishaiapp.service.ArticleService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,8 +25,7 @@ public class ArticleController {
             @RequestParam(defaultValue = "generic") String type) {
         
         try {
-            // 临时硬编码用户ID，用于测试
-            Long userId = (userDetails != null) ? userDetails.getId() : 1L;
+            Long userId = userDetails.getId();
 
             ArticleResponse response = articleService.getNextArticle(userId, type);
             return ResponseEntity.ok(response);
@@ -63,7 +63,7 @@ public class ArticleController {
             @RequestBody Map<String, Long> request) {
         
         try {
-            Long userId = (userDetails != null) ? userDetails.getId() : 1L;
+            Long userId = userDetails.getId();
             Long articleId = request.get("articleId");
             
             if (articleId == null) {
@@ -83,6 +83,33 @@ public class ArticleController {
             Map<String, String> error = new HashMap<>();
             error.put("message", e.getMessage());
             error.put("code", "COMPLETE_FAILED");
+            return ResponseEntity.status(500).body(error);
+        }
+    }
+
+    @PostMapping("/progress")
+    public ResponseEntity<?> updateWordProgress(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestBody WordProgressRequest request) {
+        
+        try {
+            Long userId = userDetails.getId();
+            
+            articleService.updateWordProgress(
+                userId, 
+                request.getArticleId(), 
+                request.getWord(), 
+                request.getState()
+            );
+            
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "单词进度已更新");
+            return ResponseEntity.ok(response);
+            
+        } catch (RuntimeException e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("message", e.getMessage());
+            error.put("code", "UPDATE_FAILED");
             return ResponseEntity.status(500).body(error);
         }
     }

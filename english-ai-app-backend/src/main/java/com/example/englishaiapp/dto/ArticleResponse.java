@@ -18,12 +18,14 @@ public class ArticleResponse {
         private String word;
         private String meaning;
         private Integer masteryScore;
+        private String state; // "unused", "correct", "wrong"
 
         public WordItem(Long id, String word, String meaning, Integer masteryScore) {
             this.id = id;
             this.word = word;
             this.meaning = meaning;
             this.masteryScore = masteryScore;
+            this.state = "unused"; // 默认未使用
         }
     }
 }

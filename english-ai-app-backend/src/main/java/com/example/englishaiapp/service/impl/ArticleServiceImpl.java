@@ -247,4 +247,71 @@ public class ArticleServiceImpl implements ArticleService {
 
         return response;
     }
+
+    @Override
+    @Transactional
+    public void updateWordProgress(Long userId, Long articleId, String word, String state) {
+        // 1. 查找文章
+        UserArticle article = userArticleRepository.findById(articleId)
+                .orElseThrow(() -> new RuntimeException("ARTICLE_NOT_FOUND"));
+
+        if (!article.getUserId().equals(userId)) {
+            throw new RuntimeException("UNAUTHORIZED");
+        }
+
+        try {
+            // 2. 解析 wordBankJson
+            List<ArticleResponse.WordItem> wordBank = objectMapper.readValue(
+                    article.getWordBankJson(),
+                    new TypeReference<List<ArticleResponse.WordItem>>() {}
+            );
+
+            // 3. 找到对应单词并更新状态
+            boolean wordFound = false;
+            for (ArticleResponse.WordItem item : wordBank) {
+                if (item.getWord().equalsIgnoreCase(word)) {
+                    item.setState(state);
+                    wordFound = true;
+
+                    // 4. 更新单词掌握度（如果有 wordId）
+                    if (item.getId() != null) {
+                        updateMasteryScore(userId, item.getId(), state);
+                    }
+                    break;
+                }
+            }
+
+            if (!wordFound) {
+                throw new RuntimeException("WORD_NOT_FOUND_IN_ARTICLE");
+            }
+
+            // 5. 序列化回 JSON 并保存
+            article.setWordBankJson(objectMapper.writeValueAsString(wordBank));
+            userArticleRepository.save(article);
+
+        } catch (Exception e) {
+            throw new RuntimeException("更新单词进度失败: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * 更新用户单词掌握度
+     */
+    private void updateMasteryScore(Long userId, Long wordId, String state) {
+        Optional<UserWordMastery> masteryOpt = userWordMasteryRepository
+                .findByUserIdAndWordId(userId, wordId);
+
+        if (masteryOpt.isPresent()) {
+            UserWordMastery mastery = masteryOpt.get();
+            int currentScore = mastery.getMasteryScore();
+
+            if ("correct".equals(state)) {
+                mastery.setMasteryScore(Math.min(100, currentScore + 1));
+            } else if ("wrong".equals(state)) {
+                mastery.setMasteryScore(Math.max(0, (int)(currentScore - 0.5)));
+            }
+
+            userWordMasteryRepository.save(mastery);
+        }
+    }
 }

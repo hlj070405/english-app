@@ -361,11 +361,13 @@
 /* 小卡片样式 - 2x2网格磨砂玻璃（更透明） */
 .quest-card-small {
   background: linear-gradient(135deg, rgba(255, 0, 85, 0.15) 0%, rgba(139, 92, 246, 0.15) 100%);
+  /* 磨砂效果调节：blur() 控制模糊程度，saturate() 控制饱和度 */
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 10px solid rgba(255, 255, 255, 0.1);
   border-radius: var(--border-radius-lg);
-  padding: 24px;
+  /* 上下 padding 减小，让卡片变扁 */
+  padding: 12px 12px;
   position: relative;
   overflow: hidden;
   cursor: pointer;
@@ -382,31 +384,49 @@
 }
 
 .quest-card-small .quest-header {
-  margin-bottom: 16px;
+  margin-bottom: 6px;
+}
+
+.quest-card-small .quest-header-center {
+  text-align: center;
+  margin-bottom: 8px;
 }
 
 .quest-card-small .quest-icon {
-  font-size: 24px;
+  font-size: 18px;
 }
 
 .quest-card-small .quest-title {
-  font-size: 16px;
+  font-size: 15px;
   letter-spacing: 1px;
 }
 
 .quest-card-small .quest-list {
-  margin-bottom: 16px;
+  margin-bottom: 8px;
   flex: 1;
 }
 
+.quest-card-small .quest-description {
+  text-align: center;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 12px;
+  line-height: 1.5;
+  margin-bottom: 10px;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .quest-card-small .quest-item {
-  padding: 6px 0;
-  font-size: 14px;
+  padding: 2px 0;
+  font-size: 13px;
+  line-height: 1.4;
 }
 
 .quest-card-small .quest-btn {
-  padding: 12px;
-  font-size: 14px;
+  padding: 6px 16px;
+  font-size: 13px;
 }
 
 /* 用户头像和下拉菜单 */

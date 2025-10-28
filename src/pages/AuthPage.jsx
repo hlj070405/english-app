@@ -26,19 +26,21 @@ function AuthPage({ onLoginSuccess }) {
     if (isLoginMode) {
       // --- 登录逻辑 ---
       try {
-        const response = await fetch('/api/users/login', {
+        const response = await fetch('/api/auth/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
           body: JSON.stringify({ username: formData.username, password: formData.password }),
         });
 
         if (!response.ok) {
-          throw new Error('Invalid username or password');
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Invalid username or password');
         }
 
-        const user = await response.json();
-        localStorage.setItem('user', JSON.stringify(user));
-        onLoginSuccess(user);
+        const data = await response.json();
+        localStorage.setItem('user', JSON.stringify(data.user));
+        onLoginSuccess(data.user);
       } catch (err) {
         setError(err.message);
       }
@@ -51,24 +53,41 @@ function AuthPage({ onLoginSuccess }) {
       }
 
       try {
-        const response = await fetch('/api/users/register', {
+        const response = await fetch('/api/auth/register', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
           body: JSON.stringify({ 
             username: formData.username, 
             email: formData.email, 
-            password: formData.password 
+            password: formData.password,
+            nickname: formData.username // 默认使用用户名作为昵称
           }),
         });
 
         if (!response.ok) {
-          throw new Error('Registration failed. Username or email may already exist.');
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Registration failed. Username or email may already exist.');
         }
 
+        const data = await response.json();
         // 注册成功后自动登录
-        const registeredUser = await response.json();
-        localStorage.setItem('user', JSON.stringify(registeredUser));
-        onLoginSuccess(registeredUser);
+        const loginResponse = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ username: formData.username, password: formData.password }),
+        });
+
+        if (loginResponse.ok) {
+          const loginData = await loginResponse.json();
+          localStorage.setItem('user', JSON.stringify(loginData.user));
+          onLoginSuccess(loginData.user);
+        } else {
+          // 注册成功但登录失败，切换到登录模式
+          setIsLoginMode(true);
+          setError('注册成功，请登录');
+        }
       } catch (err) {
         setError(err.message);
       }

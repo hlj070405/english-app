@@ -33,4 +33,13 @@ public interface ArticleService {
      * @param count 数量
      */
     void generateBatchForUser(Long userId, int count);
+
+    /**
+     * 更新单词答题进度和掌握度
+     * @param userId 用户ID
+     * @param articleId 文章ID
+     * @param word 单词
+     * @param state 状态（correct/wrong）
+     */
+    void updateWordProgress(Long userId, Long articleId, String word, String state);
 }

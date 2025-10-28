@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -93,6 +94,49 @@ public class QwenClient {
             case "advanced" -> "高级（可以使用复杂句式和高级词汇）";
             default -> "中级（适中难度，句式和词汇难度适中）";
         };
+    }
+
+    /**
+     * 简单的聊天接口（用于 AI 助手）
+     */
+    public String chat(String systemPrompt, String userMessage) {
+        try {
+            // 构建 messages
+            List<Map<String, String>> messages = new ArrayList<>();
+            messages.add(Map.of("role", "system", "content", systemPrompt));
+            messages.add(Map.of("role", "user", "content", userMessage));
+
+            // 构建请求体（使用千问 API 的格式）
+            Map<String, Object> input = new HashMap<>();
+            input.put("messages", messages);
+
+            Map<String, Object> parameters = new HashMap<>();
+            parameters.put("result_format", "message");
+
+            Map<String, Object> requestBody = new HashMap<>();
+            requestBody.put("model", MODEL);
+            requestBody.put("input", input);
+            requestBody.put("parameters", parameters);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.set("Authorization", "Bearer " + API_KEY);
+
+            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+            ResponseEntity<String> response = restTemplate.postForEntity(API_URL, entity, String.class);
+
+            // 解析响应
+            JsonNode root = objectMapper.readTree(response.getBody());
+            JsonNode output = root.path("output");
+            JsonNode choices = output.path("choices");
+            if (choices.isArray() && choices.size() > 0) {
+                return choices.get(0).path("message").path("content").asText();
+            }
+            throw new RuntimeException("无法解析 AI 响应");
+
+        } catch (Exception e) {
+            throw new RuntimeException("调用千问API失败: " + e.getMessage(), e);
+        }
     }
 
     private Map<String, String> parseResponse(String responseBody) {

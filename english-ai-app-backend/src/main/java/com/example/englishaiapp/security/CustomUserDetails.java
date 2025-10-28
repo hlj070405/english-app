@@ -19,6 +19,10 @@ public class CustomUserDetails implements UserDetails {
         return user.getId();
     }
 
+    public Long getUserId() {
+        return user.getId();
+    }
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         // 暂不实现角色权限

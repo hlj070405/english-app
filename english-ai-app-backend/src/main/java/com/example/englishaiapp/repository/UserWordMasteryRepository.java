@@ -4,6 +4,7 @@ import com.example.englishaiapp.domain.UserWordMastery;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 
@@ -25,4 +26,10 @@ public interface UserWordMasteryRepository extends JpaRepository<UserWordMastery
     // 获取掌握度最低的前8个单词（用于生成文章）
     @Query("SELECT m FROM UserWordMastery m WHERE m.userId = :userId ORDER BY m.masteryScore ASC, m.lastLearnedAt ASC")
     List<UserWordMastery> findTop8ByUserIdOrderByMasteryScore(Long userId, Pageable pageable);
+
+    // 获取用户所有单词（分页）
+    Page<UserWordMastery> findByUserId(Long userId, Pageable pageable);
+
+    // 获取用户所有单词（不分页）
+    List<UserWordMastery> findByUserId(Long userId);
 }
