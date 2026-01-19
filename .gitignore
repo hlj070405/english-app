@@ -33,3 +33,9 @@ lerna-debug.log*
 *.njsproj
 *.sln
 *.sw?
+
+# Backend
+english-ai-app-backend/target/
+english-ai-app-backend/.mvn/
+english-ai-app-backend/mvnw
+english-ai-app-backend/mvnw.cmd
